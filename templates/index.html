@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Price Prediction</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Gold Price Prediction</h1>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="prediction">
+            <h2>Predict Future Gold Prices</h2>
+            <form action="/predict" method="post">
+                <label for="date">Select Future Date:</label>
+                <input type="date" id="date" name="date" required>
+                <button type="submit">Predict Price</button>
+            </form>
+            
+            <div id="result">
+                {% if error %}
+                    <p style="color: red;">{{ error }}</p>
+                {% elif prediction %}
+                    <p>Predicted Price for {{ date }}: ₹{{ prediction }}</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Gold Price Prediction. All rights reserved.</p>
+    </footer>
+</body>
+</html>
