@@ -6,59 +6,41 @@ import os
 
 app = Flask(__name__)
 
-# Path to the model file
+# Load model
 model_path = 'gold_price_predictor.pkl'
+if not os.path.exists(model_path):
+    raise FileNotFoundError("Model not found! Run model_train.py first.")
 
-# Check if the model file exists before loading it
-if os.path.exists(model_path):
-    model = pickle.load(open(model_path, 'rb'))
-else:
-    raise FileNotFoundError(f"The model file '{model_path}' was not found. Please make sure the model is saved correctly.")
+model = pickle.load(open(model_path, 'rb'))
+
+# Load model accuracy (if available)
+accuracy_info = "N/A"
+if os.path.exists('model_metrics.txt'):
+    with open('model_metrics.txt', 'r') as f:
+        accuracy_info = f.read()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', accuracy=accuracy_info)
 
 @app.route('/predict', methods=['POST'])
 def predict():
     date_str = request.form['date']
     try:
-        # Convert the input date to a datetime object
         future_date = dt.datetime.strptime(date_str, '%Y-%m-%d').date()
         today = dt.date.today()
 
-        # Check if the date is in the future
         if future_date <= today:
-            error = "Please select a future date."
-            return render_template('index.html', error=error)
+            return render_template('index.html', error="Please select a future date.", accuracy=accuracy_info)
 
-        # Call the predict_price function
-        prediction = predict_price(future_date)
+        features = np.array([[future_date.year, future_date.month, future_date.day]])
+        prediction = model.predict(features)[0]
+        prediction = round(float(prediction), 2)
 
-        return render_template('index.html', prediction=prediction, date=future_date)
+        return render_template('index.html', prediction=prediction, date=future_date, accuracy=accuracy_info)
 
     except ValueError:
-        error = "Invalid date format. Please enter a valid date."
-        return render_template('index.html', error=error)
-
-def predict_price(future_date):
-    """
-    Function to predict the gold price for a given future date.
-    The model takes the year, month, and day as features to make a prediction.
-    """
-    # Extract features from the future_date (year, month, day)
-    year = future_date.year
-    month = future_date.month
-    day = future_date.day
-
-    # Example: Create a feature vector for prediction (this should match the model's training data structure)
-    features = np.array([[year, month, day]])
-
-    # Get the prediction from the model
-    prediction = model.predict(features)
-
-    # Return the predicted price (round it to 2 decimal places)
-    return round(prediction[0], 2)
+        return render_template('index.html', error="Invalid date format. Please enter a valid date.", accuracy=accuracy_info)
 
 if __name__ == '__main__':
     app.run(debug=True)
